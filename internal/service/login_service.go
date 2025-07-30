@@ -16,7 +16,6 @@ import (
 	"main.go/internal/types"
 )
 
-// 15677320121@163.com Qwe123456
 const (
 	loginURL         = "https://fxg.jinritemai.com/login/common"
 	successURL       = "https://fxg.jinritemai.com/ffa/mshop/homepage/index"
@@ -24,62 +23,7 @@ const (
 	shopAccountRoute = "get_account_info?"
 	tokenRoute       = "get_interact_renew?"
 	shopIdRoute      = "getdid?"
-	//https://fxg.jinritemai.com/ecomauth/loginv1/get_account_info?login_source=doudian_pc_web&_lid=084831763735
 )
-
-// https://fxg.jinritemai.com/api/order/searchlist?page=0&pageSize=10&order_by=create_time&order=desc&tab=all&appid=1&__token=ea651e7b48f824858c3898b83fca9625&_bid=ffa_order&aid=4272&_lid=005597326237&verifyFp=verify_md574s92_Ywos6QbE_qhu8_4CB7_8gRt_hGLiRUCjakuW&fp=verify_md574s92_Ywos6QbE_qhu8_4CB7_8gRt_hGLiRUCjakuW
-// https://fxg.jinritemai.com/api/order/receiveinfo?come_from=pc&aid=4272&ttwid=7527586484410910244&order_id=6944715062353859770&version=v2&apply_user=receiver&appid=1&__token=ea651e7b48f824858c3898b83fca9625&_bid=ffa_order&_lid=013054488545&verifyFp=verify_md574s92_Ywos6QbE_qhu8_4CB7_8gRt_hGLiRUCjakuW&fp=verify_md574s92_Ywos6QbE_qhu8_4CB7_8gRt_hGLiRUCjakuW&msToken=dfzbMsATSXw8c_14o33hUFzmtS-R2AWglKromkoiechyPt0R8Vq24kHtUX3RLcT-QkBgI-QpJWCqz2mHryMHnUArdd7OXf5Sq9FOlwZ2IzinVFfOnf2wYQMufsvAThbw8ab7VbrM5UXcJF9ali7qYaLiOzAMl_xTk79Z7-TCAg%3D%3D&a_bogus=EXm0QmwDmEdPkfmh5UQLfY3qIlP3YppZ0Gi0MDZMknvr9y39HMTP9exEjAtvgCYjis%2FmIe8jy4hjTNMMx5%2FyA3vRHuDKUIcgmESDeM32so0j5qvruyfmrsJx4vJlFeeQ5i53Ec7MqJKcFYmk09Q95kI6PEVja3Lk96EtrNqL2o0E
-
-// https://fxg.jinritemai.com/api/order/receiveinfo?come_from=pc&aid=4272&ttwid=7527586484410910244&order_id=6944715062353859770&version=v2&apply_user=receiver&appid=1&__token=ea651e7b48f824858c3898b83fca9625&_bid=ffa_order&_lid=013054488545&verifyFp=verify_md574s92_Ywos6QbE_qhu8_4CB7_8gRt_hGLiRUCjakuW&fp=verify_md574s92_Ywos6QbE_qhu8_4CB7_8gRt_hGLiRUCjakuW
-
-//OK https://fxg.jinritemai.com/api/order/receiveinfo?come_from=pc&aid=4272&order_id=6944715062353859770&version=v2&apply_user=receiver&appid=1&__token=ea651e7b48f824858c3898b83fca9625&_bid=ffa_order&verifyFp=verify_md574s92_Ywos6QbE_qhu8_4CB7_8gRt_hGLiRUCjakuW&fp=verify_md574s92_Ywos6QbE_qhu8_4CB7_8gRt_hGLiRUCjakuW
-
-// https://fxg.jinritemai.com/api/order/orderDetail?order_id=6944715062353859770&appid=1&__token=ea651e7b48f824858c3898b83fca9625&_bid=ffa_order&aid=4272&_lid=009195607352&verifyFp=verify_md574s92_Ywos6QbE_qhu8_4CB7_8gRt_hGLiRUCjakuW&fp=verify_md574s92_Ywos6QbE_qhu8_4CB7_8gRt_hGLiRUCjakuW&msToken=32t-yEuONEvB4oi4IWypIqLO9QlIrPh8qKf9YM2O09l111lHFuK8qoBbcPON3iBfve9PZ1DMs6cLTBk9smrmFMWBJZ5lf2VtW06zy4WswTZPVtygOujoUI860fCPeUttI3zEQVpUBtKh2bg-11jreTgYczhJyK4G&a_bogus=EyRh%2FR86mEDTDfDk5UQLfY3qIIr3YdBU0Gi0MDZMNVVYFg39HMYu9exYjlXvUQLjis%2FmIe8jy4hjTNMMx5%2FyA3vRHuDKUIcgmESDeM32so0j-1vruy8mrsJx4vJlFeeQ5i53Ec7MqJKcFYmk09Q95kI6PEVja3Lk96EtrNqL2o%2FG
-
-//OK https://fxg.jinritemai.com/api/order/orderDetail?order_id=6944715062353859770&appid=1&__token=ea651e7b48f824858c3898b83fca9625&_bid=ffa_order&aid=4272&verifyFp=verify_md574s92_Ywos6QbE_qhu8_4CB7_8gRt_hGLiRUCjakuW&fp=verify_md574s92_Ywos6QbE_qhu8_4CB7_8gRt_hGLiRUCjakuW
-
-// https://fxg.jinritemai.com/product/tproduct/batchDelete?appid=1&__token=ea651e7b48f824858c3898b83fca9625&_bid=ffa_goods&_lid=024420734844&verifyFp=verify_md574s92_Ywos6QbE_qhu8_4CB7_8gRt_hGLiRUCjakuW&fp=verify_md574s92_Ywos6QbE_qhu8_4CB7_8gRt_hGLiRUCjakuW&msToken=y0m3_xB58i3cUoEYNu5jqzHqCiD_tGZDS70723AkP5qvHPFRgyr4XC6X1OtzQ8hoKwn1XGuJB8h6NLXZD8MEctS6Gss5JFEe1fMDSPOHSEEKXpDa4TL8YJKglVKcpHWjsG5q59YMm9nmB2m0cjTIs4kyRyEevAFA&a_bogus=DX8M%2FQgfmE2BDDEX5UQLfY3qIIJUYdQ90Gi0MDZMttIYWy39HMTW9exYj4GvKtYjis%2FmIeWjy4hbYpcprQC781wf7Wsx%2F2CZmyh0tMeg5xSSs1XnC6hgrUhw5wsACFrQsv1lE5RkqwcGFuRDA9%2FrmhxUPjxjGNiswyG7GIQCXfR3E-6%2FSE%3D%3D
-// https://fxg.jinritemai.com/product/tproduct/batchDelete?appid=1&__token=ea651e7b48f824858c3898b83fca9625&_bid=ffa_goods&_lid=024420734844&verifyFp=verify_md574s92_Ywos6QbE_qhu8_4CB7_8gRt_hGLiRUCjakuW&fp=verify_md574s92_Ywos6QbE_qhu8_4CB7_8gRt_hGLiRUCjakuW
-/// POST
-// product_ids[]
-// 3764031627425087904
-// appid
-// 1
-// __token
-// ea651e7b48f824858c3898b83fca9625
-// _bid
-// ffa_goods
-// _lid
-// 037185247513
-
-// https://fxg.jinritemai.com/product/tproduct/completeDelete?appid=1&__token=ea651e7b48f824858c3898b83fca9625&_bid=ffa_goods&_lid=046613931737&verifyFp=verify_md574s92_Ywos6QbE_qhu8_4CB7_8gRt_hGLiRUCjakuW&fp=verify_md574s92_Ywos6QbE_qhu8_4CB7_8gRt_hGLiRUCjakuW&msToken=9pPS57oUly7oBys_ZfPkPEhEQp_Y24jacBsPijYneBBGHqQPnNfO6AZxtRo-0ckdvo-4lZDZ37Whj6F_B5NL7axP9oM_iAPQMv6a8mXK6gfRILstXmeVR9X6eLsS5RhuP-RJcrSVKqg_pasl9QOHYy_KmjCqCBGv&a_bogus=mJW0M5LvdD2Bkfmv5UQLfY3qI6EfYdQ60Gi0MDZM9fAYwg39HMOX9exYj-Jv1kgjis%2FmIeyjy4hbYNOgrQC781wf7Wsx%2F2CZmyh0tMeg5xSSs1feejusJUsNmktlSMn25kHUEKi8q7CaSYuDWoqe4Xn4bfebYrtswnuYt9%2FbUf%3D%3D
-
-// CheckCookieExpiration 检查并返回过期的 cookies
-func CheckCookieExpiration(context playwright.BrowserContext) ([]playwright.Cookie, error) {
-	// 获取上下文中的所有 cookies
-	cookies, err := context.Cookies()
-	if err != nil {
-		return nil, fmt.Errorf("获取 cookies 失败: %v", err)
-	}
-
-	// 当前时间
-	now := time.Now().Unix()
-	var expiredCookies []playwright.Cookie
-
-	for _, cookie := range cookies {
-		// 如果 Expires 为 0，表示是会话 cookie，不检查过期
-		if cookie.Expires == 0 {
-			continue
-		}
-
-		// 检查是否过期（Expires 是秒级时间戳）
-		if float64(now) > cookie.Expires {
-			expiredCookies = append(expiredCookies, cookie)
-		}
-	}
-
-	return expiredCookies, nil
-}
 
 // LoginOrAutoLogin 主登录函数
 func LoginOrAutoLogin(username, password string, appState *types.AppState) (bool, error) {
@@ -98,7 +42,7 @@ func LoginOrAutoLogin(username, password string, appState *types.AppState) (bool
 	}
 
 	// 3. 使用Playwright进行自动化登录
-	ok, err := playwrightLogin(username, password, appState)
+	ok, err := LoginByAccount(username, password, appState)
 	if err != nil {
 		return ok, fmt.Errorf("登录失败: %v", err)
 	}
@@ -430,8 +374,8 @@ func saveTokenInfo(appState *types.AppState, username string, cookie string, exp
 
 }
 
-// playwrightLogin 使用Playwright进行自动化登录
-func playwrightLogin(username, password string, appState *types.AppState) (bool, error) {
+// LoginByAccount 使用Playwright进行自动化登录
+func LoginByAccount(username, password string, appState *types.AppState) (bool, error) {
 	// 初始化Playwright
 	pw, err := playwright.Run()
 	if err != nil {
