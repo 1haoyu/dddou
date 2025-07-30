@@ -313,42 +313,16 @@ func createFilterPanel(appState *types.AppState) *fyne.Container {
 
 	// 创建刷新按钮
 	refreshButton := widget.NewButton("刷新过滤", func() {
-		// if appState.FilterFilePath != "" {
-		// 	appState.StatusBar.SetText("刷新过滤关键字...")
-		// 	go func() {
-		// 		loadFilterFile(appState)
-
-		// 		// 刷新所有已打开的商品标签页
-		// 		refreshAllProductTabs(appState)
-		// 	}()
-		// } else {
-		// 	appState.StatusBar.SetText("请先选择过滤文件")
-		// }
-
-		// sku, err := SkuModel.Api_find_by_id("3766017532163653929")
-		// if err == nil {
-		// 	downloader.DoOcrImages(sku, appState)
-		// }
-
-		// skus, total, err := SkuModel.Api_select_all("229940601")
-		// if err == nil {
-		// 	log.Printf("加载商品总数: %d", total)
-		// 	for _, sku := range skus {
-		// 		log.Printf("检测商品信息: %s", sku.Name)
-		// 		//downloader.DoOcrImages(sku, appState)
-		// 	}
-		// }
-		// all := SkuModel.Api_count(229940601)
-		// log.Printf("加载商品总数: %d", all)
-
-		// skus, total := SkuModel.Api_select(229940601, 20, 0)
-		// if total > 0 {
-		// 	log.Printf("加载商品总数: %d", total)
-		// 	for _, sku := range skus {
-		// 		log.Printf("检测商品信息: %s", sku.Name)
-		// 		//downloader.DoOcrImages(sku, appState)
-		// 	}
-		// }
+		if appState.FilterFilePath != "" {
+			appState.StatusBar.SetText("刷新过滤关键字...")
+			go func() {
+				loadFilterFile(appState)
+				// 刷新所有已打开的商品标签页
+				refreshAllProductTabs(appState)
+			}()
+		} else {
+			appState.StatusBar.SetText("请先选择过滤文件")
+		}
 	})
 
 	// 创建"增加商品"按钮
@@ -869,72 +843,86 @@ func applyProductFilter(products []SkuModel.DataItem, keywords []string) []SkuMo
 	return filtered
 }
 
+// 获取或初始化分页状态
+func getOrInitPagination(appState *types.AppState, shopName string) *types.PaginationState {
+	// 获取或创建分页状态
+	pagination, exists := appState.PaginationStates[shopName]
+	if !exists {
+		// 初始化分页状态
+		pagination = &types.PaginationState{
+			PageSize:          10,
+			CurrentPage:       1,
+			PageInfo:          binding.NewString(),
+			TotalProducts:     0,
+			TotalPages:        1,
+			TotalProductsInfo: binding.NewString(),
+		}
+		appState.PaginationStates[shopName] = pagination
+	}
+	return pagination
+}
+
+// 更新分页状态的总商品数和总页数
+func updatePaginationTotal(appState *types.AppState, shopName string, accountID string) {
+	pagination := getOrInitPagination(appState, shopName)
+
+	// 从数据库获取商品总数
+	total := SkuModel.Api_count(accountID)
+	pagination.TotalProducts = int(total)
+
+	// 计算总页数
+	if pagination.PageSize > 0 {
+		pagination.TotalPages = (pagination.TotalProducts + pagination.PageSize - 1) / pagination.PageSize
+		if pagination.TotalPages == 0 {
+			pagination.TotalPages = 1
+		}
+	} else {
+		pagination.TotalPages = 1
+	}
+
+	// 更新分页信息显示
+	pagination.PageInfo.Set(fmt.Sprintf("第 %d 页/共 %d 页",
+		pagination.CurrentPage, pagination.TotalPages))
+}
+
+// 获取当前页的商品数据
+func getCurrentPageProducts(appState *types.AppState, shopName string, accountID string) ([]SkuModel.DataItem, error) {
+	pagination := getOrInitPagination(appState, shopName)
+
+	// 从数据库获取当前页的商品
+	products, _ := SkuModel.Api_select(accountID, pagination.PageSize, pagination.CurrentPage)
+
+	// 应用过滤
+	filteredProducts := applyProductFilter(products, appState.FilterKeywords)
+	return filteredProducts, nil
+}
+
 // 修改 loadProductsForShop 函数，生成更多模拟数据
 func loadProductsForShop(shop ShopModel.Account, appState *types.AppState) ([]SkuModel.DataItem, error) {
 	// all := SkuModel.Api_count(229940601)
 	// log.Printf("加载商品总数: %d", all)
 	appendLog(appState, fmt.Sprintf("检测商品信息: %s", appState.ShopCookieInfo.AccountID))
-	var pageIndex = 0
-	pagination, exists := appState.PaginationStates[shop.AccountName]
-	if exists {
-		pageIndex = pagination.CurrentPage
-	}
-	products, total := SkuModel.Api_select(appState.ShopCookieInfo.AccountID, 20, pageIndex)
-	if total > 0 {
-		log.Printf("加载商品总数: %d", total)
-		for _, sku := range products {
-			appendLog(appState, fmt.Sprintf("检测商品信息: %s", sku.Name))
-			//log.Printf("检测商品信息: %s", sku.Name)
-			//downloader.DoOcrImages(sku, appState)
-		}
-	}
-	// 应用过滤
-	filteredProducts := applyProductFilter(products, appState.FilterKeywords)
-
-	return filteredProducts, nil
+	accountID := appState.ShopCookieInfo.AccountID
+	shopName := shop.AccountName
+	// 更新分页总数
+	updatePaginationTotal(appState, shopName, accountID)
+	// 获取当前页商品
+	return getCurrentPageProducts(appState, shopName, accountID)
 }
 
 // 修改 addOrUpdateProductTab 函数，添加分页支持
 func addOrUpdateProductTab(appState *types.AppState, shop ShopModel.Account, products []SkuModel.DataItem) {
 	tabTitle := shop.AccountName
+	accountID := appState.ShopCookieInfo.AccountID
 
-	// 获取或创建分页状态
-	pagination, exists := appState.PaginationStates[tabTitle]
-	if !exists {
-		// 初始化分页状态
-		pagination = &types.PaginationState{
-			PageSize:      10,
-			CurrentPage:   1,
-			TotalProducts: len(products),
-			PageInfo:      binding.NewString(), // 关键修复：初始化PageInfo
-		}
-		// 计算总页数
-		pagination.TotalPages = (pagination.TotalProducts + pagination.PageSize - 1) / pagination.PageSize
-		if pagination.TotalPages == 0 {
-			pagination.TotalPages = 1
-		}
-		// 设置初始分页信息
-		pagination.PageInfo.Set(fmt.Sprintf("第 %d 页/共 %d 页", pagination.CurrentPage, pagination.TotalPages))
-		appState.PaginationStates[tabTitle] = pagination
-	} else {
-		// 更新商品总数
-		pagination.TotalProducts = len(products)
-	}
-
-	// 计算总页数
-	pagination.TotalPages = (pagination.TotalProducts + pagination.PageSize - 1) / pagination.PageSize
-	if pagination.TotalPages == 0 {
-		pagination.TotalPages = 1
-	}
-	// 获取当前页数据
-	currentPageProducts := getCurrentPageProducts(pagination, products)
+	// 获取或初始化分页状态
+	getOrInitPagination(appState, tabTitle)
+	updatePaginationTotal(appState, tabTitle, accountID)
 
 	// 检查是否已存在该TAB
 	for _, tab := range appState.ProductTabs.Items {
 		if tab.Text == tabTitle {
-			// 修改调用，传入店铺名称
-			tab.Content = createProductListWithPagination(appState, currentPageProducts, tabTitle, products)
-			// 更新映射
+			tab.Content = createProductListWithPagination(appState, products, tabTitle)
 			appState.TabShopMap[tabTitle] = shop
 			appState.ProductTabs.Refresh()
 			return
@@ -946,7 +934,6 @@ func addOrUpdateProductTab(appState *types.AppState, shop ShopModel.Account, pro
 		shop.AccountName,
 		createProductDetailView(appState, shop, products),
 	)
-	// 添加到映射
 	appState.TabShopMap[tabTitle] = shop
 	appState.ProductTabs.Append(newTab)
 	appState.ProductTabs.Select(newTab)
@@ -972,36 +959,23 @@ func createProductDetailView(appState *types.AppState, shop ShopModel.Account, p
 	mainContainer.Add(table)
 
 	// 分页控件
-	pagination := createPaginationControls(appState, shop.AccountName, products)
+	pagination := createPaginationControls(appState, shop.AccountName)
 	mainContainer.Add(pagination)
 
 	return container.NewPadded(mainContainer)
 }
 
-// 修改 getCurrentPageProducts 函数
-func getCurrentPageProducts(pagination *types.PaginationState, products []SkuModel.DataItem) []SkuModel.DataItem {
-	start := (pagination.CurrentPage - 1) * pagination.PageSize
-	if start >= len(products) {
-		start = 0
-	}
-
-	end := start + pagination.PageSize
-	if end > len(products) {
-		end = len(products)
-	}
-
-	return products[start:end]
-}
-
-// 修改 createProductListWithPagination 函数
-func createProductListWithPagination(appState *types.AppState, currentPageProducts []SkuModel.DataItem, shopName string, allProducts []SkuModel.DataItem) fyne.CanvasObject {
+func createProductListWithPagination(
+	appState *types.AppState,
+	currentPageProducts []SkuModel.DataItem,
+	shopName string,
+) fyne.CanvasObject {
 	// 创建表格
 	table := createProductTable(currentPageProducts)
 
-	// 创建分页控件 - 传入店铺名称
-	pagination := createPaginationControls(appState, shopName, allProducts)
+	// 创建分页控件 - 不需要传入所有商品
+	pagination := createPaginationControls(appState, shopName)
 
-	// 创建布局：表格在上，分页控件在下
 	return container.NewBorder(nil, pagination, nil, nil, table)
 }
 
@@ -1105,33 +1079,19 @@ func createProductTable(products []SkuModel.DataItem) fyne.CanvasObject {
 }
 
 // 修改 createPaginationControls 函数
-func createPaginationControls(appState *types.AppState, shopName string, allProducts []SkuModel.DataItem) *fyne.Container {
-	// 获取该店铺的分页状态
-	pagination, exists := appState.PaginationStates[shopName]
-	if !exists {
-		// 如果不存在，创建默认状态
-		pagination = &types.PaginationState{
-			PageSize:      10,
-			CurrentPage:   1,
-			TotalProducts: len(allProducts),
-			PageInfo:      binding.NewString(), // 关键修复：初始化PageInfo
-		}
-		pagination.TotalPages = (len(allProducts) + pagination.PageSize - 1) / pagination.PageSize
-		if pagination.TotalPages == 0 {
-			pagination.TotalPages = 1
-		}
-		pagination.PageInfo.Set(fmt.Sprintf("第 %d 页/共 %d 页", pagination.CurrentPage, pagination.TotalPages))
-		appState.PaginationStates[shopName] = pagination
-	}
+func createPaginationControls(appState *types.AppState, shopName string) *fyne.Container {
+	// 获取分页状态
+	pagination := getOrInitPagination(appState, shopName)
 
 	// 更新分页信息的函数
 	updatePageInfo := func() {
-		pagination.PageInfo.Set(fmt.Sprintf("第 %d 页/共 %d 页", pagination.CurrentPage, pagination.TotalPages))
+		pagination.PageInfo.Set(fmt.Sprintf("第 %d 页/共 %d 页",
+			pagination.CurrentPage, pagination.TotalPages))
 	}
 
 	// 使用闭包捕获当前店铺名称
 	refreshForShop := func() {
-		refreshCurrentProductTab(appState, shopName, allProducts)
+		refreshCurrentProductTab(appState, shopName)
 	}
 
 	// 上一页按钮
@@ -1182,7 +1142,7 @@ func createPaginationControls(appState *types.AppState, shopName string, allProd
 		pagination.PageSize = size
 		pagination.CurrentPage = 1
 		// 重新计算总页数
-		pagination.TotalPages = (len(allProducts) + pagination.PageSize - 1) / pagination.PageSize
+		pagination.TotalPages = (len(pagination.Products) + pagination.PageSize - 1) / pagination.PageSize
 		if pagination.TotalPages == 0 {
 			pagination.TotalPages = 1
 		}
@@ -1191,6 +1151,10 @@ func createPaginationControls(appState *types.AppState, shopName string, allProd
 	}
 	pageSizeLabel := widget.NewLabel("每页:")
 
+	// 页码信息 - 使用绑定标签
+	totalInfo := widget.NewLabelWithData(pagination.TotalProductsInfo)
+	// 更新分页信息显示
+	pagination.TotalProductsInfo.Set(fmt.Sprintf("商品总数：%d", pagination.TotalProducts))
 	// 布局
 	return container.NewHBox(
 		prevBtn,
@@ -1200,79 +1164,33 @@ func createPaginationControls(appState *types.AppState, shopName string, allProd
 		nextBtn,
 		jumpEntry,
 		jumpBtn,
+		totalInfo,
 	)
 }
 
 // 修改 refreshCurrentProductTab 函数
-func refreshCurrentProductTab(appState *types.AppState, shopName string, allProducts []SkuModel.DataItem) {
+func refreshCurrentProductTab(appState *types.AppState, shopName string) {
 	// 获取当前选中的标签页
 	currentTab := appState.ProductTabs.Selected()
-	if currentTab == nil {
+	if currentTab == nil || currentTab.Text != shopName {
 		return
 	}
 
-	// 获取该店铺的分页状态
-	pagination, exists := appState.PaginationStates[shopName]
+	// 获取店铺信息
+	_, exists := appState.TabShopMap[shopName]
 	if !exists {
-		// 如果不存在，创建默认状态
-		pagination = &types.PaginationState{
-			PageSize:      10,
-			CurrentPage:   1,
-			TotalProducts: len(allProducts),
-			PageInfo:      binding.NewString(),
-		}
-		appState.PaginationStates[shopName] = pagination
+		return
 	}
 
-	// 防止除数为零
-	if pagination.PageSize <= 0 {
-		pagination.PageSize = 10
-	}
+	// 更新分页状态
+	accountID := appState.ShopCookieInfo.AccountID
+	updatePaginationTotal(appState, shopName, accountID)
 
-	pagination.TotalProducts = len(allProducts)
+	// 获取当前页商品
+	currentPageProducts, _ := getCurrentPageProducts(appState, shopName, accountID)
 
-	// 计算总页数
-	pagination.TotalPages = (pagination.TotalProducts + pagination.PageSize - 1) / pagination.PageSize
-	if pagination.TotalPages == 0 {
-		pagination.TotalPages = 1
-	}
-
-	// 确保当前页在有效范围内
-	if pagination.CurrentPage > pagination.TotalPages {
-		pagination.CurrentPage = pagination.TotalPages
-	} else if pagination.CurrentPage < 1 {
-		pagination.CurrentPage = 1
-	}
-
-	// 更新分页信息
-	pagination.PageInfo.Set(fmt.Sprintf("第 %d 页/共 %d 页", pagination.CurrentPage, pagination.TotalPages))
-
-	// 获取当前页数据
-	currentPageProducts := getCurrentPageProducts(pagination, allProducts)
-
-	// 检查内容是否真的需要更新
-	currentContent := currentTab.Content
-	if paginationContent, ok := currentContent.(*fyne.Container); ok {
-		if len(paginationContent.Objects) > 0 {
-			if tableContainer, ok := paginationContent.Objects[0].(*container.Scroll); ok {
-				if existingTable, ok := tableContainer.Content.(*widget.Table); ok {
-					// 获取表格的行数
-					rows, _ := existingTable.Length()
-
-					// 如果行数相同，只刷新数据
-					if rows == len(currentPageProducts)+1 {
-						// 使用温和刷新 - 只更新文本内容
-						refreshTableData(existingTable, currentPageProducts)
-						appState.ProductTabs.Refresh()
-						return
-					}
-				}
-			}
-		}
-	}
-
-	// 需要完全更新内容
-	currentTab.Content = createProductListWithPagination(appState, currentPageProducts, shopName, allProducts)
+	// 更新标签页内容
+	currentTab.Content = createProductListWithPagination(appState, currentPageProducts, shopName)
 	appState.ProductTabs.Refresh()
 }
 
